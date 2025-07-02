@@ -51,15 +51,13 @@ body {
 .download-banner {
   position: absolute;
   bottom: 20px;
-  left: 20px;    /* move from right to left */
-  right: auto;
+  left: 20px;    /* always on the left */
   z-index: 5;
 }
 .download-banner img {
-  width: 400px;  /* 200px × 1.5 = 300px */
+  width: 400px;  /* scale as needed */
   height: auto;
 }
-
 
 /* nav buttons */
 .nav-btn {
