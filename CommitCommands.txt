@@ -1,4 +1,4 @@
-cd C:/Users/dpdur/Desktop/FlipBook
+cd \\D3D_Nas\homes\D3D\D3D Projects\2025\79_FlipBook_Marcella&Dan\Final\FlipBook
 git status
 git add .
 git commit -m "Commit Description"
