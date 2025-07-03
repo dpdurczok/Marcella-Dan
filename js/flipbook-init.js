@@ -1,5 +1,5 @@
 (function() {
-  // 1) set --vh to actual window.innerHeight * 0.01
+  // 1) real VH hack
   function setRealVh() {
     document.documentElement.style.setProperty(
       '--vh',
@@ -9,26 +9,19 @@
   setRealVh();
   window.addEventListener('resize', setRealVh);
 
-  // 2) flipbook initialization
-  $(function() {
+  // 2) declare flipbook logic
+  function startFlipbook() {
     const fb = $('#flipbook');
     const exts = ['png','jpg','jpeg','mp4'];
     let pages = [], videoPageNum = null;
 
     async function exists(num, ext) {
-      return new Promise(r => {
-        if (ext === 'mp4') {
-          const v = document.createElement('video');
-          v.src = `assets/page${num}.${ext}`;
-          v.onloadedmetadata = () => r(true);
-          v.onerror = () => r(false);
-        } else {
-          const img = new Image();
-          img.src = `assets/page${num}.${ext}`;
-          img.onload  = () => r(true);
-          img.onerror = () => r(false);
-        }
-      });
+      try {
+        const res = await fetch(`assets/page${num}.${ext}`, { method:'HEAD' });
+        return res.ok;
+      } catch {
+        return false;
+      }
     }
 
     (async () => {
@@ -42,7 +35,6 @@
         pages.push({ num: i, ext: found, file: `page${i}.${found}` });
         if (found === 'mp4') videoPageNum = i;
       }
-
       if (!pages.length) {
         console.error('No page files found in assets/');
         return;
@@ -70,7 +62,7 @@
           }).appendTo($pg);
         }
 
-        // download banner on last page
+        // last‐page download banner
         if (idx === pages.length - 1) {
           $('<a>', {
             href: 'https://drive.google.com/drive/folders/1RflXkSgh1AHwnBYUk3zVf06pVOywQc4J?usp=drive_link',
@@ -125,7 +117,13 @@
       }
       toggleArrows(1);
 
-      // nav buttons, keyboard & touch
+      function goTo(page) {
+        page = Math.min(Math.max(page, 1), pages.length);
+        toggleArrows(page);
+        fb.turn('page', page);
+      }
+
+      // nav buttons, keys & touch
       $('#prev-btn').click(() => goTo(fb.turn('page') - 1));
       $('#next-btn').click(() => goTo(fb.turn('page') + 1));
       $(document).keydown(e => {
@@ -134,15 +132,15 @@
       });
       let touchX = null;
       fb.on('touchstart', e => { touchX = e.originalEvent.touches[0].clientX; });
-      fb.on('touchend',   e => {
+      fb.on('touchend', e => {
         if (touchX === null) return;
         const dx = touchX - e.originalEvent.changedTouches[0].clientX;
-        if (dx > 50)      goTo(fb.turn('page') + 1);
+        if (dx > 50)       goTo(fb.turn('page') + 1);
         else if (dx < -50) goTo(fb.turn('page') - 1);
         touchX = null;
       });
 
-      // responsive scaling against real viewport
+      // scaling
       function resizeFlipbook() {
         const vp = document.querySelector('.viewport');
         const w  = vp.clientWidth;
@@ -151,14 +149,19 @@
         document.querySelector('.flipbook-container')
                 .style.transform = `scale(${s})`;
       }
-      window.addEventListener('load',  resizeFlipbook);
       window.addEventListener('resize', resizeFlipbook);
-
-      function goTo(page) {
-        page = Math.min(Math.max(page, 1), pages.length);
-        toggleArrows(page);
-        fb.turn('page', page);
-      }
+      resizeFlipbook();
     })();
+  }
+
+  // 3) on window.load → wait 2 s → hide loader & start
+  window.addEventListener('load', () => {
+    // ensure vh is correct after load UI bars settle
+    setRealVh();
+    setTimeout(() => {
+      document.getElementById('loader').style.display = 'none';
+      document.querySelector('.viewport').style.visibility = 'visible';
+      startFlipbook();
+    }, 2000);
   });
 })();

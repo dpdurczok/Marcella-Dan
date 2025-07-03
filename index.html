@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <!-- lock to device width, no auto-zoom -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no">
   <title>My Flipbook</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
 
@@ -15,6 +19,13 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader"></div>
+  </div>
+
+  <!-- FLIPBOOK VIEWPORT -->
   <div class="viewport">
     <div class="flipbook-container">
       <div id="flipbook"></div>
@@ -27,7 +38,7 @@
     </div>
   </div>
 
-  <!-- your initialization script -->
+  <!-- initialization script -->
   <script src="js/flipbook-init.js"></script>
 </body>
 </html>
