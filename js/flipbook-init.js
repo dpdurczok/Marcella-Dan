@@ -1,5 +1,5 @@
 (function() {
-  // 1) real-VH hack
+  // 1) real‐VH hack
   function setRealVh() {
     document.documentElement.style.setProperty(
       '--vh',
@@ -9,7 +9,7 @@
   setRealVh();
   window.addEventListener('resize', setRealVh);
 
-  // 2) unified exists() that works on file:// and http(s)://
+  // 2) unified exists() for file:// and http(s)://
   function exists(num, ext) {
     const url = `assets/page${num}.${ext}`;
     if (location.protocol === 'file:') {
@@ -32,7 +32,7 @@
       .catch(() => false);
   }
 
-  // 3) returns a Promise that resolves once turn.js is fully initialized
+  // 3) set up the flipbook, return a promise when done
   function startFlipbook() {
     return (async () => {
       const fb = $('#flipbook');
@@ -54,15 +54,15 @@
         return;
       }
 
-      // build the DOM
+      // build markup
       pages.forEach((p, idx) => {
         const $pg = $('<div>').addClass('page');
         if (p.ext === 'mp4') {
           const $v = $('<video>', {
             id: 'video-page',
             muted: true,
-            autoplay: true,       // start muted autoplay
-            playsinline: true,    // allow inline on iOS
+            autoplay: true,    // ensure autoplay
+            playsinline: true, // inline on iOS
             controls: false,
             preload: 'metadata'
           }).css({ width:'100%', height:'100%', objectFit:'cover' });
@@ -71,8 +71,6 @@
         } else {
           $('<img>', { src:`assets/${p.file}`, alt:`Page ${p.num}` }).appendTo($pg);
         }
-
-        // download banner on last page
         if (idx === pages.length - 1) {
           $('<a>', {
             href: 'https://drive.google.com/drive/folders/1RflXkSgh1AHwnBYUk3zVf06pVOywQc4J?usp=drive_link',
@@ -86,11 +84,10 @@
             })
           ).appendTo($pg);
         }
-
         fb.append($pg);
       });
 
-      // wait for the very first page asset to load before proceeding
+      // wait until the cover asset actually loads
       const firstEl = $('.page').first().find('img, video').get(0);
       await new Promise(resolve => {
         if (!firstEl) return resolve();
@@ -109,7 +106,7 @@
         }
       });
 
-      // initialize turn.js
+      // init turn.js
       const videoEl = $('#video-page').get(0);
       fb.turn({
         width: 720,
@@ -129,11 +126,10 @@
           },
           turned: (e, page) => {
             toggleArrows(page);
-            // if we land on the video page, unmute and play
             if (page === videoPageNum && videoEl) {
               videoEl.muted    = false;
               videoEl.controls = true;
-              videoEl.play().catch(() => {});
+              videoEl.play().catch(()=>{});
             } else if (videoEl) {
               videoEl.controls = false;
             }
@@ -141,13 +137,14 @@
         }
       });
 
-      // nav arrow logic
+      // show/hide nav arrows
       function toggleArrows(page) {
         $('#prev-btn')[ page <= 1           ? 'hide' : 'show' ]();
         $('#next-btn')[ page >= pages.length ? 'hide' : 'show' ]();
       }
       toggleArrows(1);
 
+      // navigation helpers
       function goTo(page) {
         page = Math.min(Math.max(page, 1), pages.length);
         toggleArrows(page);
@@ -177,7 +174,7 @@
         } else {
           const curr = fb.turn('page');
           if (curr === videoPageNum) {
-            videoEl.play().catch(() => {});
+            videoEl.play().catch(()=>{});
           }
         }
       });
@@ -193,17 +190,22 @@
       }
       window.addEventListener('resize', resizeFlipbook);
       resizeFlipbook();
-
     })();
   }
 
-  // 4) on load → wait for both flipbook init & 2 s delay → hide loader & show viewport
+  // 4) on load → wait for both init & 2 s delay → hide loader/show
   window.addEventListener('load', () => {
     const initPromise  = startFlipbook();
     const delayPromise = new Promise(res => setTimeout(res, 2000));
     Promise.all([initPromise, delayPromise]).then(() => {
       document.getElementById('loader').style.display       = 'none';
       document.querySelector('.viewport').style.visibility = 'visible';
+
+      // ensure mobile actually starts the video if it's page 1
+      const videoEl = document.getElementById('video-page');
+      if (videoEl) {
+        videoEl.play().catch(()=>{});
+      }
     });
   });
 })();
